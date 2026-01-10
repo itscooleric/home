@@ -8,7 +8,7 @@ A Python script that extracts site addresses from caddy-docker-proxy labels on D
 
 ### Requirements
 
-- Python 3.9+
+- Python 3.10+ (uses type hint union syntax)
 - Docker CLI installed and accessible
 - Access to Docker socket (user must be in `docker` group or run as root)
 
