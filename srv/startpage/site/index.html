@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bernard Startpage</title>
+    <style>
+        :root {
+            --bg-color: #1a1a2e;
+            --card-bg: #16213e;
+            --card-hover: #1f3460;
+            --text-primary: #eaeaea;
+            --text-secondary: #a0a0a0;
+            --accent: #4fc3f7;
+            --section-title: #e94560;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            font-weight: 300;
+            letter-spacing: 0.1em;
+        }
+
+        header p {
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+        }
+
+        .section {
+            margin-bottom: 3rem;
+        }
+
+        .section-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--section-title);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--section-title);
+        }
+
+        .group {
+            margin-bottom: 2rem;
+        }
+
+        .group-title {
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 0.75rem;
+        }
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            padding: 1rem;
+            text-decoration: none;
+            color: inherit;
+            transition: background-color 0.2s, transform 0.2s;
+            display: block;
+        }
+
+        .card:hover {
+            background-color: var(--card-hover);
+            transform: translateY(-2px);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .card-icon {
+            font-size: 1.2rem;
+        }
+
+        .card-name {
+            font-weight: 500;
+            color: var(--accent);
+        }
+
+        .card-description {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+
+        .loading {
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        .error {
+            color: #ff6b6b;
+            background-color: rgba(255, 107, 107, 0.1);
+            padding: 1rem;
+            border-radius: 8px;
+        }
+
+        .empty {
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        footer {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            margin-top: 3rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--card-bg);
+        }
+
+        footer span {
+            margin: 0 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Bernard</h1>
+        <p>Homelab Startpage</p>
+    </header>
+
+    <main>
+        <section id="curated-section" class="section">
+            <h2 class="section-title">Curated</h2>
+            <div id="curated-content" class="loading">Loading curated links...</div>
+        </section>
+
+        <section id="generated-section" class="section">
+            <h2 class="section-title">Generated</h2>
+            <div id="generated-content" class="loading">Loading generated links...</div>
+        </section>
+    </main>
+
+    <footer>
+        <span id="generated-at"></span>
+    </footer>
+
+    <script>
+        /**
+         * Group items by their 'group' property.
+         * @param {Array} items - Array of link objects
+         * @returns {Object} - Object with group names as keys and arrays of items as values
+         */
+        function groupItems(items) {
+            const groups = {};
+            for (const item of items) {
+                const groupName = item.group || 'Ungrouped';
+                if (!groups[groupName]) {
+                    groups[groupName] = [];
+                }
+                groups[groupName].push(item);
+            }
+            return groups;
+        }
+
+        /**
+         * Render a single card element.
+         * @param {Object} item - Link object with name, href, description, icon
+         * @returns {HTMLElement} - The card anchor element
+         */
+        function renderCard(item) {
+            const card = document.createElement('a');
+            card.className = 'card';
+            card.href = item.href;
+            card.target = '_blank';
+            card.rel = 'noopener noreferrer';
+
+            const header = document.createElement('div');
+            header.className = 'card-header';
+
+            if (item.icon) {
+                const icon = document.createElement('span');
+                icon.className = 'card-icon';
+                icon.textContent = item.icon;
+                header.appendChild(icon);
+            }
+
+            const name = document.createElement('span');
+            name.className = 'card-name';
+            name.textContent = item.name;
+            header.appendChild(name);
+
+            card.appendChild(header);
+
+            if (item.description) {
+                const desc = document.createElement('div');
+                desc.className = 'card-description';
+                desc.textContent = item.description;
+                card.appendChild(desc);
+            }
+
+            return card;
+        }
+
+        /**
+         * Render grouped items into a container.
+         * @param {Object} groups - Object with group names as keys and arrays of items as values
+         * @returns {DocumentFragment} - Fragment containing all group elements
+         */
+        function renderGroups(groups) {
+            const fragment = document.createDocumentFragment();
+            
+            // Sort group names alphabetically
+            const sortedGroupNames = Object.keys(groups).sort();
+
+            for (const groupName of sortedGroupNames) {
+                const groupDiv = document.createElement('div');
+                groupDiv.className = 'group';
+
+                const title = document.createElement('h3');
+                title.className = 'group-title';
+                title.textContent = groupName;
+                groupDiv.appendChild(title);
+
+                const cardsDiv = document.createElement('div');
+                cardsDiv.className = 'cards';
+
+                for (const item of groups[groupName]) {
+                    cardsDiv.appendChild(renderCard(item));
+                }
+
+                groupDiv.appendChild(cardsDiv);
+                fragment.appendChild(groupDiv);
+            }
+
+            return fragment;
+        }
+
+        /**
+         * Load and render a JSON file into a container.
+         * @param {string} url - URL of the JSON file
+         * @param {string} containerId - ID of the container element
+         * @param {function} [onSuccess] - Optional callback with parsed data
+         */
+        async function loadAndRender(url, containerId, onSuccess) {
+            const container = document.getElementById(containerId);
+
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                const items = data.items || [];
+
+                if (items.length === 0) {
+                    container.innerHTML = '';
+                    const empty = document.createElement('div');
+                    empty.className = 'empty';
+                    empty.textContent = 'No links available.';
+                    container.appendChild(empty);
+                    return;
+                }
+
+                const groups = groupItems(items);
+                container.innerHTML = '';
+                container.appendChild(renderGroups(groups));
+
+                if (onSuccess) {
+                    onSuccess(data);
+                }
+            } catch (error) {
+                console.error(`Failed to load ${url}:`, error);
+                container.innerHTML = '';
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'error';
+                errorDiv.textContent = `Failed to load links: ${error.message}`;
+                container.appendChild(errorDiv);
+            }
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load curated links
+            loadAndRender('links.curated.json', 'curated-content');
+
+            // Load generated links and update timestamp
+            loadAndRender('links.generated.json', 'generated-content', function(data) {
+                if (data.generated_at) {
+                    const date = new Date(data.generated_at);
+                    document.getElementById('generated-at').textContent = 
+                        `Generated: ${date.toLocaleString()}`;
+                }
+            });
+        });
+    </script>
+</body>
+</html>
