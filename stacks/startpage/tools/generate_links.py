@@ -7,10 +7,16 @@ caddy-docker-proxy labels that define site addresses. It generates a JSON file
 of links suitable for a startpage.
 
 Usage:
-    python3 tools/generate_links.py --out site/links.generated.json
+    python3 tools/generate_links.py
+    # or with explicit output path:
+    python3 tools/generate_links.py --out /srv/startpage/site/links.generated.json
+
+Environment variables:
+    STARTPAGE_DATA_DIR - Data directory (default: /srv/startpage)
+                         Output defaults to $STARTPAGE_DATA_DIR/site/links.generated.json
 
 Requirements:
-    - Python 3 standard library only (no external dependencies)
+    - Python 3.10+ standard library only (no external dependencies)
     - Docker CLI available in PATH
     - Access to Docker socket (via docker command)
 """
@@ -390,15 +396,28 @@ def generate_links_json(output_path: str) -> None:
     print(f"Wrote {len(links)} link(s) to {output_path}", file=sys.stderr)
 
 
+def get_default_output_path() -> str:
+    """
+    Get the default output path from environment or fallback.
+
+    Returns:
+        Path to the default output file.
+    """
+    data_dir = os.environ.get("STARTPAGE_DATA_DIR", "/srv/startpage")
+    return os.path.join(data_dir, "site", "links.generated.json")
+
+
 def main():
     """Main entry point."""
+    default_out = get_default_output_path()
+
     parser = argparse.ArgumentParser(
         description="Generate links.json from caddy-docker-proxy labels"
     )
     parser.add_argument(
         "--out",
-        default="site/links.generated.json",
-        help="Output path for generated JSON (default: site/links.generated.json)"
+        default=default_out,
+        help=f"Output path for generated JSON (default: {default_out})"
     )
 
     args = parser.parse_args()

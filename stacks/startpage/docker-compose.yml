@@ -1,0 +1,58 @@
+# Startpage Docker Compose Stack
+# 
+# This stack provides:
+# - A static file server (nginx) for the startpage
+# - Optional: FileBrowser for editing links.curated.json
+#
+# Prerequisites:
+# - caddy-docker-proxy running with an external network
+# - /srv/startpage/site directory populated (run deploy.sh first)
+#
+# Usage:
+#   docker compose up -d
+
+services:
+  # Static file server for the startpage
+  startpage:
+    image: nginx:alpine
+    container_name: startpage
+    restart: unless-stopped
+    volumes:
+      - ${STARTPAGE_DATA_DIR:-/srv/startpage}/site:/usr/share/nginx/html:ro
+    labels:
+      # caddy-docker-proxy labels
+      caddy: ${STARTPAGE_HOSTNAME:-startpage.localhost}
+      caddy.reverse_proxy: "{{upstreams 80}}"
+      # Startpage metadata (for self-reference)
+      startpage.name: "Startpage"
+      startpage.desc: "Homelab dashboard"
+      startpage.group: "System"
+      startpage.icon: "🏠"
+    networks:
+      - caddy
+
+  # Optional: FileBrowser for in-browser editing of links.curated.json
+  # Uncomment to enable. Uses its own authentication.
+  # filebrowser:
+  #   image: filebrowser/filebrowser:latest
+  #   container_name: startpage-filebrowser
+  #   restart: unless-stopped
+  #   user: "${PUID:-1000}:${PGID:-1000}"
+  #   volumes:
+  #     - ${STARTPAGE_DATA_DIR:-/srv/startpage}/site:/srv:rw
+  #     - ${STARTPAGE_DATA_DIR:-/srv/startpage}/filebrowser/database.db:/database.db
+  #     - ${STARTPAGE_DATA_DIR:-/srv/startpage}/filebrowser/config.json:/.filebrowser.json
+  #   environment:
+  #     - FB_DATABASE=/database.db
+  #     - FB_ROOT=/srv
+  #     - FB_NOAUTH=false
+  #   labels:
+  #     caddy: edit-${STARTPAGE_HOSTNAME:-startpage.localhost}
+  #     caddy.reverse_proxy: "{{upstreams 80}}"
+  #   networks:
+  #     - caddy
+
+networks:
+  caddy:
+    external: true
+    name: ${CADDY_NETWORK:-caddy}
