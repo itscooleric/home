@@ -17,3 +17,9 @@ ENV/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Environment files (may contain secrets)
+.env
+
+# Runtime data (should not be in repo)
+/srv/
