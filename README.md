@@ -1,37 +1,55 @@
-# Startpage
+# home
 
-A simple homelab startpage that displays links extracted from caddy-docker-proxy labels on Docker containers and services.
+```text
+
+  ██╗  ██╗ ██████╗ ███╗   ███╗███████╗
+  ██║  ██║██╔═══██╗████╗ ████║██╔════╝
+  ███████║██║   ██║██╔████╔██║█████╗
+  ██╔══██║██║   ██║██║╚██╔╝██║██╔══╝
+  ██║  ██║╚██████╔╝██║ ╚═╝ ██║███████╗
+  ╚═╝  ╚═╝ ╚═════╝ ╚═╝     ╚═╝╚══════╝
+
+  homelab startpage — auto-generated from Docker labels
+  ──────────────────────────────────────────────────────
+
+  caddy-docker-proxy labels
+          │
+          ▼
+  generate_links.py ──► links.json
+          │
+          ▼
+  templates/index.html ──► startpage
+
+```
+
+Self-hosted homelab startpage that auto-discovers services by reading [caddy-docker-proxy](https://github.com/lucaslorentz/caddy-docker-proxy) labels from running Docker containers. No manual link management — deploy a container with the right labels and it appears on your dashboard.
 
 ![Startpage Screenshot](https://github.com/user-attachments/assets/4173c33c-6ba3-419d-8e39-606d2bdf66f1)
 
 ## Quick Start
 
 ```bash
-# 1. Clone and configure
-git clone <repository-url> startpage && cd startpage
+git clone https://github.com/itscooleric/home.git && cd home
 cp .env.example .env
-nano .env  # set STARTPAGE_HOSTNAME and CADDY_NETWORK
-
-# 2. Deploy and generate links
-chmod +x tools/deploy.sh && ./tools/deploy.sh
+# edit .env — set STARTPAGE_HOSTNAME and CADDY_NETWORK
+./tools/deploy.sh
 python3 tools/generate_links.py
-
-# 3. Start
 docker compose up -d
 ```
 
-Open your browser to the hostname you configured (e.g., `https://bernard.home.lan`).
+Open `https://<your-hostname>` in a browser.
+
+## How it works
+
+`generate_links.py` reads caddy-docker-proxy labels from running containers and writes `links.json`. The HTML template renders that file as a clean dashboard. Re-run the script after adding or removing services.
 
 ## Updating
 
 ```bash
-cd /opt/stacks/startpage
-git pull
-./tools/deploy.sh                # re-deploy template
-python3 tools/generate_links.py  # refresh links
+git pull && ./tools/deploy.sh && python3 tools/generate_links.py
 ```
 
 ## Further Reading
 
-- [Configuration](docs/configuration.md) — environment variables, caddy labels, curated links, FileBrowser
-- [Troubleshooting](docs/troubleshooting.md) — common issues and sanity tests
+- [Configuration](docs/configuration.md) — env vars, caddy labels, curated links
+- [Troubleshooting](docs/troubleshooting.md) — common issues and fixes
